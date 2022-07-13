@@ -1,17 +1,25 @@
-const db = require("../db")
-const { BadRequestError, NotFoundError } = require("../utils/errors")
+const db = require("../db");
+const { BadRequestError, NotFoundError } = require("../utils/errors");
 
 class Listing {
-  static async createListing({ newListing, user }) {
-    const requiredFields = ["location", "title", "description", "imageUrl"]
-    requiredFields.forEach((field) => {
-      if (!newListing?.hasOwnProperty(field)) {
-        throw new BadRequestError(`Missing required field - ${field} - in request body.`)
-      }
-    })
+	static async createListing({ newListing, user }) {
+		const requiredFields = [
+			"location",
+			"title",
+			"description",
+			"imageUrl",
+			"price",
+		];
+		requiredFields.forEach((field) => {
+			if (!newListing?.hasOwnProperty(field)) {
+				throw new BadRequestError(
+					`Missing required field - ${field} - in request body.`
+				);
+			}
+		});
 
-    const results = await db.query(
-      `
+		const results = await db.query(
+			`
         INSERT INTO listings (user_id, location, title, description, image_url, image_url2, image_url3, price)
         VALUES ((SELECT id FROM users WHERE username = $1), $2, $3, $4, $5, $6, $7, $8)
         RETURNING id,
@@ -29,24 +37,24 @@ class Listing {
                   created_at AS "createdAt",
                   updated_at AS "updatedAt";
       `,
-      [
-        user.username,
-        newListing.location,
-        newListing.title,
-        newListing.description,
-        newListing.imageUrl,
-        newListing.imageUrl2,
-        newListing.imageUrl3,
-        newListing.price,
-      ]
-    )
+			[
+				user.username,
+				newListing.location,
+				newListing.title,
+				newListing.description,
+				newListing.imageUrl,
+				newListing.imageUrl2,
+				newListing.imageUrl3,
+				newListing.price,
+			]
+		);
 
-    return results.rows[0]
-  }
+		return results.rows[0];
+	}
 
-  static async fetchListingById(listingId) {
-    const results = await db.query(
-      `
+	static async fetchListingById(listingId) {
+		const results = await db.query(
+			`
       SELECT id,
              user_id AS "userId",
              (
@@ -68,19 +76,19 @@ class Listing {
       FROM listings
       WHERE id = $1;
       `,
-      [listingId]
-    )
+			[listingId]
+		);
 
-    const listing = results.rows[0]
+		const listing = results.rows[0];
 
-    if (listing?.title) return listing
+		if (listing?.title) return listing;
 
-    throw new NotFoundError("No listing found with that id.")
-  }
+		throw new NotFoundError("No listing found with that id.");
+	}
 
-  static async fetchAll() {
-    const results = await db.query(
-      `
+	static async fetchAll() {
+		const results = await db.query(
+			`
       SELECT listings.id,
              listings.user_id AS "userId",
              users.username AS "username",
@@ -98,10 +106,10 @@ class Listing {
       FROM listings
       JOIN users ON users.id = listings.user_id;      
       `
-    )
+		);
 
-    return results.rows
-  }
+		return results.rows;
+	}
 }
 
-module.exports = Listing
+module.exports = Listing;
